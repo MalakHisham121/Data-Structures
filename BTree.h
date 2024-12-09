@@ -9,7 +9,6 @@ using namespace std;
 
 // Author Malak Hisham
 // date 9/12/2024
-
 template<class T, int order>
  struct BTreeNode{
     BTreeNode* parent;
@@ -35,153 +34,157 @@ template<class T, int order>
 };
 
 template<class T, int order>
-class BTree{
-    BTreeNode <T,order> * root ;
+class BTree {
+    BTreeNode<T, order> *root;
 public:
-    BTree(){
+    BTree() {
         root = nullptr;
     }
-    void Insert(T val){
-        BTreeNode<T,order>* Mynode = search(val);
+
+    void Insert(T val) {
+        BTreeNode<T, order> *Mynode = search(val);
         T extract = val;
 
-        while(Mynode!= nullptr&&Mynode->keys.size()==order-1) {
+        while (Mynode != nullptr && Mynode->keys.size() == order - 1) {
             vector<T> sorted = Mynode->keys;
 
             sorted.push_back(extract);
-            sort(sorted.begin(),sorted.end());
-            if(sorted.size()==order) {
-                extract = sorted[order / 2];
+            sort(sorted.begin(), sorted.end());
+            if (sorted.size() == order) {
+                extract = sorted[(order) / 2];
 
-                sorted.erase(find(sorted.begin(),sorted.end(),extract));
+                sorted.erase(find(sorted.begin(), sorted.end(), extract));
 
                 Mynode->keys = sorted;
-                if(Mynode->parent!= nullptr){
-                    int i =0;
+                if (Mynode->parent != nullptr) {
+                    int i = 0;
 
-                    for(auto child : Mynode->parent->childrens){
-                        if(child==Mynode){
-                            split(Mynode->parent,order/2 ,i);
+                    for (auto child: Mynode->parent->childrens) {
+                        if (child == Mynode) {
+                            split(Mynode->parent, order / 2, i);
                         }
                         i++;
                     }
-                }
-                else {
+                } else {
                     BTreeNode<T, order> *newRoot = new BTreeNode<T, order>;
                     newRoot->childrens.push_back(Mynode);
                     Mynode->parent = newRoot;
                     root = newRoot;
-                    split(Mynode->parent, order/2 );
+                    split(Mynode->parent, order / 2, 0);
 
                 }
-            }else{
+            } else {
                 Mynode->keys = sorted;
                 break;
             }
 
             Mynode = Mynode->parent;
         }
-        if(Mynode== nullptr) {
+        if (Mynode == nullptr) {
             BTreeNode<T, order> *newRoot = new BTreeNode<T, order>;
             if (root == nullptr)
                 newRoot->leaf = 1;
             newRoot->keys.push_back(extract);
             Mynode = newRoot;
             root = newRoot;
-        }
-        else{
+        } else {
 
             Mynode->keys.push_back(extract);
-            sort(Mynode->keys.begin(),Mynode->keys.end());
+            sort(Mynode->keys.begin(), Mynode->keys.end());
 
         }
 
 
     }
+
     // node splitted its node added to previous and back of neghibors
-    BTreeNode <T,order>*  search(T val){
-        BTreeNode<T,order>* mypointer = root;
-        bool found =0;
-        while(!found&&mypointer!= nullptr&&!mypointer->leaf){
-                for(int i =0;i<mypointer-> keys.size()  ;i++){
-                    if(val<mypointer->keys[i]){
-                        if(!mypointer->childrens.empty()&&mypointer->childrens[i]!= nullptr) {
-                            mypointer = mypointer->childrens[i];
+    BTreeNode<T, order> *search(T val) {
+        BTreeNode<T, order> *mypointer = root;
+        bool found = 0;
 
-                            found = 1;
-                            break;
-                        }
-                        else {
-                            found =1;
-                            break;
-                        }
+        while (!found && mypointer != nullptr && !mypointer->leaf) {
+            for (int i = 0; i < mypointer->keys.size(); i++) {
+                if (val < mypointer->keys[i]) {
+                    if (!mypointer->childrens.empty() && mypointer->childrens[i] != nullptr) {
+                        mypointer = mypointer->childrens[i];
 
+                       // found = 1;
+                        break;
+                    } else {
+                        found = 1;
+                        break;
                     }
 
+                }
 
-        }
 
-                if(!found&&!mypointer->childrens.empty())mypointer = mypointer->childrens.back();
+            }
+
+            if (!found && !mypointer->childrens.empty())mypointer = mypointer->childrens.back();
         }
 
 
         return mypointer;
     }
 
-    void split(BTreeNode<T,order> * currentNode,T index,int indexOfchildToparent = 0) {
+    void split(BTreeNode<T, order> *currentNode, T index, int indexOfchildToparent = 0) {
         // parent of splitted
         // make new child for it
         // get index of child from the parent
-       BTreeNode<T,order> *  newnode = new BTreeNode<T,order> ();
+        BTreeNode<T, order> *newnode = new BTreeNode<T, order>();
 
-       for(int i =index;i<currentNode->childrens[indexOfchildToparent]->keys.size();i++){
-           newnode->keys.push_back(currentNode->childrens[indexOfchildToparent]->keys[i]);
+        for (int i = index; i < currentNode->childrens[indexOfchildToparent]->keys.size(); i++) {
+            newnode->keys.push_back(currentNode->childrens[indexOfchildToparent]->keys[i]);
 
-           if(!currentNode->childrens[indexOfchildToparent]->leaf)
-               newnode->childrens.push_back(currentNode->childrens[indexOfchildToparent]->childrens[index + 1]);
+            if (!currentNode->childrens[indexOfchildToparent]->leaf &&
+                currentNode->childrens[indexOfchildToparent]->childrens.size() > index + 1)
+                newnode->childrens.push_back(currentNode->childrens[indexOfchildToparent]->childrens[index + 1]);
 
-               currentNode->childrens[indexOfchildToparent]->keys.erase(
-                       currentNode->childrens[indexOfchildToparent]->keys.begin() + index);
+            currentNode->childrens[indexOfchildToparent]->keys.erase(
+                    currentNode->childrens[indexOfchildToparent]->keys.begin() + index);
 
-           if(!currentNode->childrens[indexOfchildToparent]->leaf)
-               currentNode->childrens[indexOfchildToparent]->childrens.erase( currentNode->childrens[indexOfchildToparent]->childrens.begin()+index+1);
-           i--;
-       }
-       newnode->parent = currentNode;
-        if(!currentNode->childrens[indexOfchildToparent]->leaf)
+            if (!currentNode->childrens[indexOfchildToparent]->leaf &&
+                currentNode->childrens[indexOfchildToparent]->childrens.size() > index + 1)
+                currentNode->childrens[indexOfchildToparent]->childrens.erase(
+                        currentNode->childrens[indexOfchildToparent]->childrens.begin() + index + 1);
+            i--;
+        }
+        newnode->parent = currentNode;
+        if (!currentNode->childrens[indexOfchildToparent]->leaf &&
+            !currentNode->childrens[indexOfchildToparent]->childrens.empty())
             newnode->childrens.push_back(currentNode->childrens[indexOfchildToparent]->childrens.back());
-        if(currentNode->childrens.back()->leaf)
+        if (currentNode->childrens.back()->leaf)
             newnode->leaf = 1;
-        currentNode->childrens.insert(currentNode->childrens.begin()+indexOfchildToparent+1,newnode);
-        if(!currentNode->childrens[indexOfchildToparent]->leaf)
+        currentNode->childrens.insert(currentNode->childrens.begin() + indexOfchildToparent + 1, newnode);
+        if (!currentNode->childrens[indexOfchildToparent]->leaf &&
+            !currentNode->childrens[indexOfchildToparent]->childrens.empty())
             currentNode->childrens[indexOfchildToparent]->childrens.pop_back();
-      // currentNode->childrens[indexOfchildToparent]->childrens.push_back(nullptr);
+        // currentNode->childrens[indexOfchildToparent]->childrens.push_back(nullptr);
 
 
     }
 
 
-    void Print(){
-                string output="";
-        function <string(BTreeNode<T,order>* )> dfs = [&](BTreeNode<T,order> * current)->string{
-            if(current== nullptr)return"";
-                int u = current->keys.size()-1;
-            for(int i =0;i<current->keys.size();i++) {
-                cout<< current->keys[i];
-                if(u)u--,cout<<'.';
+    void Print() {
+        string output = "";
+        function<string(BTreeNode<T, order> *)> dfs = [&](BTreeNode<T, order> *current) -> string {
+            if (current == nullptr)return "";
+            int u = current->keys.size() - 1;
+            for (int i = 0; i < current->keys.size(); i++) {
+                cout << current->keys[i];
+                if (u)u--, cout << '.';
 
             }
-            output+="  ";
+            output += "  ";
 
 
-
-            if(!current->leaf) {
-                  //  cout<<"\n";
+            if (!current->leaf) {
+                //  cout<<"\n";
                 for (int i = 0; i < current->childrens.size(); i++) {
 
                     //cout<<i<<' ';
                     if (i < current->childrens.size() && current->childrens[i] != nullptr) {
-                        cout<<'\n'<<output;
+                        cout << '\n' << output;
                         dfs(current->childrens[i]);
                         output.pop_back();
                         output.pop_back();
@@ -191,7 +194,7 @@ public:
             return output;
         };
 
-       cout<< dfs(root);
+        cout << dfs(root)<<'\n';
     }
 
     ~BTree() {
